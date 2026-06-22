@@ -10,7 +10,11 @@ class ReviewNode(AgentNode):
         self.llm_client = LlmClient()
 
     async def execute(self, state: AgentState) -> AgentState:
-        state.review_result = await self.llm_client.review(state.final_conclusion or "", state.medical_records)
+        state.review_result = await self.llm_client.review(
+            state.final_conclusion or "",
+            state.medical_records,
+            state.evidence_list,
+        )
         if state.review_result.passed and state.review_result.score >= 80:
             state.status = "SUCCESS"
             return state

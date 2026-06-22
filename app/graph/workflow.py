@@ -16,18 +16,19 @@ from app.schemas.mq_message import AgentTaskMessage
 
 
 class InvestigationConclusionWorkflow:
+    #流程是确定性的，但节点能力是智能化的
     def __init__(self) -> None:
         self.java_client = JavaClient()
         self.nodes: list[AgentNode] = [
-            LoadTaskNode(self.java_client),
-            LoadImageNode(self.java_client),
-            OcrNode(),
-            MedicalExtractNode(),
-            PolicyCompareNode(),
-            EvidenceBuildNode(),
-            ConclusionGenerateNode(),
-            ReviewNode(),
-            CallbackNode(self.java_client),
+            LoadTaskNode(self.java_client), #加载任务上下文
+            LoadImageNode(self.java_client), #加载影像资料
+            OcrNode(), #OCR识别节点
+            MedicalExtractNode(), #病例结构化抽取节点
+            PolicyCompareNode(), #保单生效日对比节点
+            EvidenceBuildNode(), #证据链构建节点
+            ConclusionGenerateNode(), #调查结论生成节点
+            ReviewNode(), #结论质检节点
+            CallbackNode(self.java_client), #回调java服务节点
         ]
 
     async def run(self, message: AgentTaskMessage) -> AgentState:
@@ -39,9 +40,11 @@ class InvestigationConclusionWorkflow:
             trace_id=message.traceId,
         )
         for node in self.nodes:
+            #记录当前时间
             started = time.perf_counter()
             try:
                 state = await node.execute(state)
+                #记录本轮节点执行耗时
                 cost_time_ms = int((time.perf_counter() - started) * 1000)
                 if node.report_trace:
                     await self.java_client.record_step(

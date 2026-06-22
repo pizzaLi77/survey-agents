@@ -10,7 +10,11 @@ class ConclusionGenerateNode(AgentNode):
         self.llm_client = LlmClient()
 
     async def execute(self, state: AgentState) -> AgentState:
-        state.draft_conclusion = await self.llm_client.generate_conclusion(state.insured_name, state.medical_records)
+        state.draft_conclusion = await self.llm_client.generate_conclusion(
+            state.insured_name,
+            state.medical_records,
+            state.evidence_list,
+        )
         state.final_conclusion = state.draft_conclusion
         return state
 
